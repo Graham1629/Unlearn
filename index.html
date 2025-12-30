@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNLEARN | What School Got Wrong</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Covered+By+Your+Grace&family=Special+Elite&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --chalk-white: #e8e4dc;
+            --chalk-yellow: #f4d35e;
+            --chalk-pink: #ee6c4d;
+            --chalk-blue: #98c1d9;
+            --chalk-green: #a7c957;
+            --board-green: #2d4a3e;
+            --board-dark: #1a2e26;
+            --eraser-dust: rgba(232, 228, 220, 0.1);
+            --red-pen: #c1121f;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Instrument Sans', sans-serif;
+            background: var(--board-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .chalkboard-texture {
+            position: fixed;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse at 30% 20%, rgba(45, 74, 62, 0.8) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(45, 74, 62, 0.6) 0%, transparent 50%),
+                linear-gradient(180deg, var(--board-dark) 0%, var(--board-green) 50%, var(--board-dark) 100%);
+            z-index: -2;
+        }
+
+        .chalk-dust {
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 60px 24px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        h1 {
+            font-family: 'Covered By Your Grace', cursive;
+            font-size: clamp(4rem, 12vw, 8rem);
+            color: var(--chalk-white);
+            text-shadow: 
+                2px 2px 0 rgba(0,0,0,0.3),
+                -1px -1px 0 rgba(255,255,255,0.1);
+            letter-spacing: 4px;
+            line-height: 1;
+            margin-bottom: 16px;
+            animation: chalkWrite 1s ease-out;
+        }
+
+        @keyframes chalkWrite {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+                filter: blur(4px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+                filter: blur(0);
+            }
+        }
+
+        .tagline {
+            font-family: 'Special Elite', monospace;
+            font-size: 1.1rem;
+            color: var(--chalk-yellow);
+            opacity: 0.9;
+            animation: chalkWrite 1s ease-out 0.3s both;
+        }
+
+        .input-section {
+            background: rgba(0, 0, 0, 0.2);
+            border: 3px solid var(--chalk-white);
+            border-radius: 4px;
+            padding: 40px;
+            margin-bottom: 50px;
+            position: relative;
+            animation: chalkWrite 1s ease-out 0.5s both;
+        }
+
+        .input-section::before {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border: 1px dashed rgba(232, 228, 220, 0.3);
+            border-radius: 8px;
+            pointer-events: none;
+        }
+
+        .input-label {
+            font-family: 'Covered By Your Grace', cursive;
+            font-size: 1.8rem;
+            color: var(--chalk-white);
+            display: block;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .year-input-wrapper {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        #yearInput {
+            font-family: 'Special Elite', monospace;
+            font-size: 2.5rem;
+            width: 160px;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-bottom: 4px solid var(--chalk-yellow);
+            color: var(--chalk-yellow);
+            text-align: center;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #yearInput::placeholder {
+            color: rgba(244, 211, 94, 0.4);
+        }
+
+        #yearInput:focus {
+            border-bottom-color: var(--chalk-pink);
+        }
+
+        .generate-btn {
+            font-family: 'Special Elite', monospace;
+            font-size: 1.2rem;
+            padding: 16px 32px;
+            background: var(--chalk-pink);
+            color: var(--board-dark);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .generate-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 20px rgba(238, 108, 77, 0.4);
+        }
+
+        .generate-btn:active {
+            transform: scale(0.98);
+        }
+
+        .generate-btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: translateX(-100%);
+        }
+
+        .generate-btn:hover::after {
+            animation: shine 0.6s ease;
+        }
+
+        @keyframes shine {
+            to { transform: translateX(100%); }
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.visible {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .results-header {
+            font-family: 'Covered By Your Grace', cursive;
+            font-size: 2.2rem;
+            color: var(--chalk-white);
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .results-header span {
+            color: var(--chalk-yellow);
+        }
+
+        .fact-card {
+            background: rgba(0, 0, 0, 0.15);
+            border-left: 4px solid var(--chalk-blue);
+            padding: 28px 32px;
+            margin-bottom: 24px;
+            position: relative;
+            animation: slideIn 0.5s ease both;
+        }
+
+        .fact-card:nth-child(odd) {
+            border-left-color: var(--chalk-green);
+        }
+
+        .fact-card:nth-child(3n) {
+            border-left-color: var(--chalk-pink);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .fact-card:nth-child(1) { animation-delay: 0.1s; }
+        .fact-card:nth-child(2) { animation-delay: 0.2s; }
+        .fact-card:nth-child(3) { animation-delay: 0.3s; }
+        .fact-card:nth-child(4) { animation-delay: 0.4s; }
+        .fact-card:nth-child(5) { animation-delay: 0.5s; }
+        .fact-card:nth-child(6) { animation-delay: 0.6s; }
+        .fact-card:nth-child(7) { animation-delay: 0.7s; }
+        .fact-card:nth-child(8) { animation-delay: 0.8s; }
+
+        .category-tag {
+            font-family: 'Special Elite', monospace;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--chalk-yellow);
+            margin-bottom: 12px;
+            opacity: 0.8;
+        }
+
+        .old-fact {
+            font-family: 'Special Elite', monospace;
+            font-size: 1.1rem;
+            color: var(--chalk-white);
+            margin-bottom: 16px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .old-fact::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 100%;
+            height: 3px;
+            background: var(--red-pen);
+            transform: rotate(-1deg);
+            opacity: 0.9;
+        }
+
+        .correction {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .correction-arrow {
+            color: var(--chalk-green);
+            font-size: 1.5rem;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .new-fact {
+            font-family: 'Covered By Your Grace', cursive;
+            font-size: 1.4rem;
+            color: var(--chalk-green);
+            line-height: 1.4;
+        }
+
+        .year-updated {
+            font-family: 'Instrument Sans', sans-serif;
+            font-size: 0.8rem;
+            color: var(--chalk-blue);
+            margin-top: 12px;
+            opacity: 0.7;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .no-results-emoji {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .no-results-text {
+            font-family: 'Special Elite', monospace;
+            font-size: 1.2rem;
+            color: var(--chalk-white);
+            opacity: 0.7;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 80px;
+            padding-top: 40px;
+            border-top: 1px dashed rgba(232, 228, 220, 0.2);
+        }
+
+        .footer-text {
+            font-family: 'Special Elite', monospace;
+            font-size: 0.85rem;
+            color: var(--chalk-white);
+            opacity: 0.5;
+        }
+
+        .eraser-marks {
+            position: fixed;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .eraser-mark {
+            position: absolute;
+            background: var(--eraser-dust);
+            border-radius: 50%;
+            animation: eraseFade 2s ease-out forwards;
+        }
+
+        @keyframes eraseFade {
+            0% { opacity: 0.8; transform: scale(1); }
+            100% { opacity: 0; transform: scale(1.5); }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 40px 16px;
+            }
+
+            .input-section {
+                padding: 24px;
+            }
+
+            #yearInput {
+                font-size: 2rem;
+                width: 140px;
+            }
+
+            .fact-card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chalkboard-texture"></div>
+    <div class="chalk-dust"></div>
+    <div class="eraser-marks" id="eraserMarks"></div>
+
+    <div class="container">
+        <header>
+            <h1>UNLEARN</h1>
+            <p class="tagline">Everything your teachers got wrong</p>
+        </header>
+
+        <div class="input-section">
+            <label class="input-label" for="yearInput">What year did you graduate high school?</label>
+            <div class="year-input-wrapper">
+                <input type="number" id="yearInput" placeholder="2005" min="1950" max="2024">
+                <button class="generate-btn" onclick="generateFacts()">Show me the lies</button>
+            </div>
+        </div>
+
+        <div class="results" id="results"></div>
+
+        <footer>
+            <p class="footer-text">Knowledge evolves. What will we unlearn next?</p>
+        </footer>
+    </div>
+
+    <script>
+        const outdatedFacts = [
+            // BIOLOGY
+            {
+                category: "Biology",
+                oldFact: "Humans have five senses",
+                newFact: "Humans have at least 9-21 senses including proprioception, thermoception, equilibrioception, and more",
+                yearDebunked: 2010,
+                yearTaught: 1900
+            },
+            {
+                category: "Biology",
+                oldFact: "You only use 10% of your brain",
+                newFact: "Brain scans show we use virtually all parts of our brain, just not all simultaneously",
+                yearDebunked: 2008,
+                yearTaught: 1900
+            },
+            {
+                category: "Biology",
+                oldFact: "The tongue has specific taste zones",
+                newFact: "All taste receptors are distributed across the entire tongue",
+                yearDebunked: 2004,
+                yearTaught: 1900
+            },
+            {
+                category: "Biology",
+                oldFact: "Blood in your veins is blue",
+                newFact: "Blood is always red. Veins appear blue due to how light penetrates skin",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Biology",
+                oldFact: "Nerve cells cannot regenerate",
+                newFact: "Neurogenesis occurs throughout life, especially in the hippocampus",
+                yearDebunked: 1998,
+                yearTaught: 1900
+            },
+            {
+                category: "Biology",
+                oldFact: "Hair and nails continue growing after death",
+                newFact: "The skin dehydrates and retracts, creating the illusion of growth",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Biology",
+                oldFact: "Shaving makes hair grow back thicker",
+                newFact: "Shaved hair has a blunt tip that feels coarser, but thickness doesn't change",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Biology",
+                oldFact: "Humans and dinosaurs never coexisted",
+                newFact: "Birds ARE dinosaurs. You've probably eaten dinosaur for dinner",
+                yearDebunked: 2014,
+                yearTaught: 1900
+            },
+            {
+                category: "Biology",
+                oldFact: "Junk DNA serves no purpose",
+                newFact: "Much of 'junk' DNA regulates gene expression and has crucial functions",
+                yearDebunked: 2012,
+                yearTaught: 1970
+            },
+            {
+                category: "Biology",
+                oldFact: "Evolution is just a theory",
+                newFact: "In science, 'theory' means well-substantiated explanation. Evolution is as proven as gravity",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            // ANATOMY
+            {
+                category: "Anatomy",
+                oldFact: "Humans have 206 bones",
+                newFact: "The number varies by person (200-213) and changes with age as bones fuse",
+                yearDebunked: 2015,
+                yearTaught: 1900
+            },
+            {
+                category: "Anatomy",
+                oldFact: "The heart is on the left side of your chest",
+                newFact: "The heart is nearly centered, just slightly tilted left. The apex points leftward",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Anatomy",
+                oldFact: "Fingerprints are unique",
+                newFact: "No scientific study has proven fingerprints are truly unique. Courts have wrongly convicted people",
+                yearDebunked: 2016,
+                yearTaught: 1900
+            },
+            {
+                category: "Anatomy",
+                oldFact: "Adults can't grow new brain cells",
+                newFact: "The hippocampus creates new neurons throughout life through neurogenesis",
+                yearDebunked: 2019,
+                yearTaught: 1900
+            },
+            {
+                category: "Anatomy",
+                oldFact: "Your stomach digests gum for 7 years",
+                newFact: "Gum passes through your digestive system in days, just like other food",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            // ASTRONOMY
+            {
+                category: "Astronomy",
+                oldFact: "Pluto is the ninth planet",
+                newFact: "Pluto was reclassified as a dwarf planet by the IAU",
+                yearDebunked: 2006,
+                yearTaught: 1930
+            },
+            {
+                category: "Astronomy",
+                oldFact: "The Great Wall of China is visible from space",
+                newFact: "It's too narrow to see with the naked eye from orbit. Astronauts confirmed this",
+                yearDebunked: 2003,
+                yearTaught: 1900
+            },
+            {
+                category: "Astronomy",
+                oldFact: "The Sun is yellow",
+                newFact: "The Sun is actually white. Atmospheric scattering makes it appear yellow from Earth",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Astronomy",
+                oldFact: "There are nine planets in our solar system",
+                newFact: "Eight planets, but we've discovered thousands of exoplanets orbiting other stars",
+                yearDebunked: 2006,
+                yearTaught: 1900
+            },
+            {
+                category: "Astronomy",
+                oldFact: "The dark side of the Moon is always dark",
+                newFact: "The far side gets just as much sunlight. We just never see it from Earth",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Astronomy",
+                oldFact: "Seasons are caused by Earth's distance from the Sun",
+                newFact: "Seasons result from Earth's axial tilt, not orbital distance",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Astronomy",
+                oldFact: "Black holes suck everything in like vacuum cleaners",
+                newFact: "Objects orbit black holes like any gravity source. You'd have to get very close to be pulled in",
+                yearDebunked: 2010,
+                yearTaught: 1900
+            },
+            {
+                category: "Astronomy",
+                oldFact: "The North Star is the brightest star",
+                newFact: "Polaris ranks about 50th in brightness. Sirius is the brightest star visible from Earth",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            // HISTORY
+            {
+                category: "History",
+                oldFact: "Columbus discovered America",
+                newFact: "Indigenous peoples lived there for 15,000+ years. Vikings arrived 500 years before Columbus",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "History",
+                oldFact: "Vikings wore horned helmets",
+                newFact: "No archaeological evidence supports this. It was a 19th century theatrical invention",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "History",
+                oldFact: "Napoleon was short",
+                newFact: "At 5'7\", he was average height for his era. French inches differed from English inches",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "History",
+                oldFact: "Medieval people thought the Earth was flat",
+                newFact: "Educated people knew Earth was round since ancient Greece. Columbus's issue was the size",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "History",
+                oldFact: "Einstein failed math",
+                newFact: "Einstein excelled at math. The myth came from a misunderstood Swiss grading system",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "History",
+                oldFact: "Marie Antoinette said 'Let them eat cake'",
+                newFact: "This phrase appeared in writing before she was born. It was propaganda",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "History",
+                oldFact: "George Washington had wooden teeth",
+                newFact: "His dentures were made of ivory, metal, and human teeth—never wood",
+                yearDebunked: 2005,
+                yearTaught: 1900
+            },
+            {
+                category: "History",
+                oldFact: "The Salem witch trials burned witches at the stake",
+                newFact: "No one was burned in Salem. Victims were hanged or pressed with stones",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "History",
+                oldFact: "Paul Revere shouted 'The British are coming!'",
+                newFact: "The mission was secret. He likely said 'The Regulars are coming.' Colonists considered themselves British",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "History",
+                oldFact: "The Iron Maiden was a medieval torture device",
+                newFact: "Iron Maidens were 18th-19th century fabrications, never used in medieval times",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "History",
+                oldFact: "Cleopatra was Egyptian",
+                newFact: "She was Greek, descended from Ptolemy, one of Alexander the Great's generals",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "History",
+                oldFact: "The Pyramids were built by slaves",
+                newFact: "Archaeological evidence shows paid workers built them, with good food and medical care",
+                yearDebunked: 2010,
+                yearTaught: 1900
+            },
+            // PHYSICS
+            {
+                category: "Physics",
+                oldFact: "Atoms are the smallest particles",
+                newFact: "Atoms contain protons, neutrons, and electrons. These contain quarks and other subatomic particles",
+                yearDebunked: 1968,
+                yearTaught: 1900
+            },
+            {
+                category: "Physics",
+                oldFact: "Nothing can travel faster than light",
+                newFact: "While true for matter, space itself can expand faster than light, and quantum entanglement appears instantaneous",
+                yearDebunked: 2011,
+                yearTaught: 1900
+            },
+            {
+                category: "Physics",
+                oldFact: "Lightning never strikes the same place twice",
+                newFact: "Tall buildings get struck repeatedly. The Empire State Building gets hit about 23 times per year",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Physics",
+                oldFact: "Glass is a slow-moving liquid",
+                newFact: "Glass is an amorphous solid. Old windows are thicker at the bottom due to manufacturing, not flow",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Physics",
+                oldFact: "Electrons orbit the nucleus like planets",
+                newFact: "Electrons exist in probability clouds. The Bohr model is a useful simplification, not reality",
+                yearDebunked: 1926,
+                yearTaught: 1913
+            },
+            {
+                category: "Physics",
+                oldFact: "Hot water freezes faster than cold water is a myth",
+                newFact: "The Mpemba effect is real under certain conditions. Hot water can freeze faster",
+                yearDebunked: 2017,
+                yearTaught: 1970
+            },
+            {
+                category: "Physics",
+                oldFact: "Gravity is a force pulling objects down",
+                newFact: "Einstein showed gravity is the curvature of spacetime caused by mass",
+                yearDebunked: 1915,
+                yearTaught: 1687
+            },
+            // HEALTH
+            {
+                category: "Health",
+                oldFact: "You need 8 glasses of water per day",
+                newFact: "Water needs vary by person, activity, and climate. Food provides significant hydration too",
+                yearDebunked: 2008,
+                yearTaught: 1945
+            },
+            {
+                category: "Health",
+                oldFact: "Breakfast is the most important meal",
+                newFact: "Studies show meal timing matters less than total nutrition. Intermittent fasting can be healthy",
+                yearDebunked: 2014,
+                yearTaught: 1900
+            },
+            {
+                category: "Health",
+                oldFact: "Sugar makes kids hyperactive",
+                newFact: "Controlled studies found no link between sugar and hyperactivity. It's a placebo effect in parents",
+                yearDebunked: 1995,
+                yearTaught: 1970
+            },
+            {
+                category: "Health",
+                oldFact: "Cracking knuckles causes arthritis",
+                newFact: "A doctor cracked only his left knuckles for 60 years with no difference. Studies confirm no link",
+                yearDebunked: 2009,
+                yearTaught: 1900
+            },
+            {
+                category: "Health",
+                oldFact: "Wait 30 minutes after eating to swim",
+                newFact: "No evidence supports this. You might get a cramp, but it won't cause drowning",
+                yearDebunked: 2011,
+                yearTaught: 1900
+            },
+            {
+                category: "Health",
+                oldFact: "Reading in dim light ruins your eyesight",
+                newFact: "It may cause temporary eye strain, but no permanent damage occurs",
+                yearDebunked: 2007,
+                yearTaught: 1900
+            },
+            {
+                category: "Health",
+                oldFact: "You lose most body heat through your head",
+                newFact: "You lose heat proportionally to exposed surface area. Your head isn't special",
+                yearDebunked: 2008,
+                yearTaught: 1970
+            },
+            {
+                category: "Health",
+                oldFact: "Eating carrots improves your night vision",
+                newFact: "WWII British propaganda to hide radar technology. Vitamin A only helps if you're deficient",
+                yearDebunked: 2000,
+                yearTaught: 1940
+            },
+            {
+                category: "Health",
+                oldFact: "Milk builds strong bones",
+                newFact: "Countries with highest dairy consumption have highest osteoporosis rates. Exercise matters more",
+                yearDebunked: 2014,
+                yearTaught: 1900
+            },
+            {
+                category: "Health",
+                oldFact: "Cold weather causes colds",
+                newFact: "Viruses cause colds. Cold weather just keeps people indoors where viruses spread more easily",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Health",
+                oldFact: "Antibiotics cure the flu",
+                newFact: "The flu is viral. Antibiotics only work on bacteria",
+                yearDebunked: 2000,
+                yearTaught: 1950
+            },
+            {
+                category: "Health",
+                oldFact: "You should starve a fever",
+                newFact: "Your body needs nutrients to fight infection. Eating moderately helps recovery",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            // NUTRITION
+            {
+                category: "Nutrition",
+                oldFact: "The food pyramid is the ideal diet",
+                newFact: "The 1992 pyramid was influenced by food industry lobbying. MyPlate replaced it in 2011",
+                yearDebunked: 2011,
+                yearTaught: 1992
+            },
+            {
+                category: "Nutrition",
+                oldFact: "Fat makes you fat",
+                newFact: "Healthy fats are essential. Excess calories from any source cause weight gain",
+                yearDebunked: 2015,
+                yearTaught: 1980
+            },
+            {
+                category: "Nutrition",
+                oldFact: "Eggs are bad for your cholesterol",
+                newFact: "Dietary cholesterol has minimal impact on blood cholesterol for most people",
+                yearDebunked: 2015,
+                yearTaught: 1968
+            },
+            {
+                category: "Nutrition",
+                oldFact: "Spinach is exceptionally high in iron",
+                newFact: "A decimal error in 1870 inflated spinach's iron content by 10x. It's actually average",
+                yearDebunked: 2010,
+                yearTaught: 1900
+            },
+            {
+                category: "Nutrition",
+                oldFact: "Organic food is more nutritious",
+                newFact: "Studies show minimal nutritional difference between organic and conventional produce",
+                yearDebunked: 2012,
+                yearTaught: 1990
+            },
+            {
+                category: "Nutrition",
+                oldFact: "Salt causes high blood pressure",
+                newFact: "Only about 25% of people are salt-sensitive. For most, salt intake has minimal effect",
+                yearDebunked: 2016,
+                yearTaught: 1970
+            },
+            {
+                category: "Nutrition",
+                oldFact: "Red meat is unhealthy",
+                newFact: "Unprocessed red meat in moderation is fine. Processing and overconsumption are the issues",
+                yearDebunked: 2019,
+                yearTaught: 1980
+            },
+            // GEOGRAPHY
+            {
+                category: "Geography",
+                oldFact: "Mount Everest is the tallest mountain",
+                newFact: "Mauna Kea is taller from base to peak. Chimborazo's peak is farthest from Earth's center",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Geography",
+                oldFact: "Sahara is the world's largest desert",
+                newFact: "Antarctica is larger. Deserts are defined by precipitation, not temperature",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Geography",
+                oldFact: "Rivers always flow south",
+                newFact: "Rivers flow downhill regardless of direction. The Nile flows north",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Geography",
+                oldFact: "The Amazon is the longest river",
+                newFact: "The Nile is slightly longer, though it depends on how you measure tributaries",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Geography",
+                oldFact: "There are seven continents",
+                newFact: "The number is arbitrary—some models count 4, 5, 6, or 7. Zealandia may be an 8th",
+                yearDebunked: 2017,
+                yearTaught: 1900
+            },
+            {
+                category: "Geography",
+                oldFact: "Greenland is enormous on world maps",
+                newFact: "The Mercator projection distorts size. Greenland is actually smaller than Congo",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            // NATURE
+            {
+                category: "Nature",
+                oldFact: "Bats are blind",
+                newFact: "All bat species can see. Many use echolocation in addition to vision",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Nature",
+                oldFact: "Goldfish have 3-second memories",
+                newFact: "Goldfish can remember things for months and can be trained to perform tasks",
+                yearDebunked: 2003,
+                yearTaught: 1900
+            },
+            {
+                category: "Nature",
+                oldFact: "Touching a baby bird makes its mother reject it",
+                newFact: "Birds have a poor sense of smell. They won't abandon babies due to human scent",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Nature",
+                oldFact: "Chameleons change color for camouflage",
+                newFact: "They primarily change color for temperature regulation and communication, not hiding",
+                yearDebunked: 2008,
+                yearTaught: 1900
+            },
+            {
+                category: "Nature",
+                oldFact: "Ostriches bury their heads in sand",
+                newFact: "They lie flat with their necks extended when threatened. The head-burying myth is ancient Roman",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Nature",
+                oldFact: "Lemmings commit mass suicide",
+                newFact: "Disney staged the famous footage. Lemmings migrate but don't intentionally jump off cliffs",
+                yearDebunked: 2000,
+                yearTaught: 1958
+            },
+            {
+                category: "Nature",
+                oldFact: "Daddy longlegs are the most venomous spiders",
+                newFact: "Most aren't even spiders. The ones that are have never been shown to be dangerous to humans",
+                yearDebunked: 2004,
+                yearTaught: 1900
+            },
+            {
+                category: "Nature",
+                oldFact: "Bulls are enraged by the color red",
+                newFact: "Bulls are colorblind to red. They react to the movement of the cape, not its color",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Nature",
+                oldFact: "Dogs see only in black and white",
+                newFact: "Dogs see blue and yellow. They're red-green colorblind, not fully colorblind",
+                yearDebunked: 2013,
+                yearTaught: 1900
+            },
+            {
+                category: "Nature",
+                oldFact: "Wolves have alpha males who dominate the pack",
+                newFact: "Wolf packs are families. The 'alpha' researcher retracted his findings in 1999",
+                yearDebunked: 1999,
+                yearTaught: 1970
+            },
+            {
+                category: "Nature",
+                oldFact: "Sharks can smell blood from miles away",
+                newFact: "Sharks detect blood at about one part per million—impressive, but not from miles away",
+                yearDebunked: 2010,
+                yearTaught: 1900
+            },
+            {
+                category: "Nature",
+                oldFact: "Elephants are afraid of mice",
+                newFact: "Elephants may be startled by sudden movements but don't specifically fear mice",
+                yearDebunked: 2008,
+                yearTaught: 1900
+            },
+            {
+                category: "Nature",
+                oldFact: "Bees die after stinging once",
+                newFact: "Only honeybees die. Most bee species can sting multiple times",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Nature",
+                oldFact: "Camels store water in their humps",
+                newFact: "Humps store fat, which metabolizes into energy. Their kidneys conserve water instead",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Nature",
+                oldFact: "Bananas grow on trees",
+                newFact: "Banana plants are giant herbs. The 'trunk' is actually tightly wrapped leaves",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            // PSYCHOLOGY
+            {
+                category: "Psychology",
+                oldFact: "There are left-brain and right-brain people",
+                newFact: "Brain imaging shows both hemispheres work together. There's no dominant side for personality",
+                yearDebunked: 2013,
+                yearTaught: 1960
+            },
+            {
+                category: "Psychology",
+                oldFact: "Learning styles (visual, auditory, kinesthetic) are real",
+                newFact: "No scientific evidence supports teaching to specific learning styles improves outcomes",
+                yearDebunked: 2008,
+                yearTaught: 1970
+            },
+            {
+                category: "Psychology",
+                oldFact: "We dream only during REM sleep",
+                newFact: "Dreams occur in all sleep stages, though REM dreams are more vivid and memorable",
+                yearDebunked: 2017,
+                yearTaught: 1953
+            },
+            {
+                category: "Psychology",
+                oldFact: "Polygraphs detect lies",
+                newFact: "Polygraphs measure stress, not lying. They're inadmissible in most courts",
+                yearDebunked: 2003,
+                yearTaught: 1950
+            },
+            {
+                category: "Psychology",
+                oldFact: "People use only 10% of their brain",
+                newFact: "Brain imaging shows virtually all areas are active. We use 100% of our brains",
+                yearDebunked: 2008,
+                yearTaught: 1900
+            },
+            {
+                category: "Psychology",
+                oldFact: "Memory works like a video recording",
+                newFact: "Memories are reconstructed each time. They change with each recall",
+                yearDebunked: 2010,
+                yearTaught: 1900
+            },
+            {
+                category: "Psychology",
+                oldFact: "Opposites attract in relationships",
+                newFact: "Research shows similarity in values and interests predicts relationship success",
+                yearDebunked: 2013,
+                yearTaught: 1900
+            },
+            {
+                category: "Psychology",
+                oldFact: "Venting anger helps reduce it",
+                newFact: "Venting often increases anger. Calm distraction works better",
+                yearDebunked: 2002,
+                yearTaught: 1970
+            },
+            {
+                category: "Psychology",
+                oldFact: "The five stages of grief are universal",
+                newFact: "Kübler-Ross's stages were never meant to be linear or universal. Grief is individual",
+                yearDebunked: 2017,
+                yearTaught: 1969
+            },
+            {
+                category: "Psychology",
+                oldFact: "Multitasking makes you more productive",
+                newFact: "The brain can't truly multitask. Switching between tasks reduces efficiency by up to 40%",
+                yearDebunked: 2009,
+                yearTaught: 1990
+            },
+            // TECHNOLOGY
+            {
+                category: "Technology",
+                oldFact: "Typing kills handwriting skills",
+                newFact: "Research shows both can coexist and typing can actually improve overall literacy",
+                yearDebunked: 2016,
+                yearTaught: 1990
+            },
+            {
+                category: "Technology",
+                oldFact: "Sitting close to the TV damages your eyes",
+                newFact: "Modern TVs emit virtually no harmful radiation. Eye strain is temporary",
+                yearDebunked: 2000,
+                yearTaught: 1960
+            },
+            {
+                category: "Technology",
+                oldFact: "Cell phones cause brain cancer",
+                newFact: "Decades of research found no consistent link between cell phones and cancer",
+                yearDebunked: 2020,
+                yearTaught: 1990
+            },
+            {
+                category: "Technology",
+                oldFact: "You should fully drain batteries before recharging",
+                newFact: "This was true for NiCd batteries. Lithium-ion batteries prefer partial charges",
+                yearDebunked: 2010,
+                yearTaught: 1990
+            },
+            {
+                category: "Technology",
+                oldFact: "More megapixels means better photos",
+                newFact: "Sensor size, lens quality, and processing matter more than megapixel count",
+                yearDebunked: 2015,
+                yearTaught: 2000
+            },
+            // DINOSAURS
+            {
+                category: "Dinosaurs",
+                oldFact: "Dinosaurs were scaly reptiles",
+                newFact: "Many dinosaurs had feathers. Birds are literally living dinosaurs",
+                yearDebunked: 2014,
+                yearTaught: 1900
+            },
+            {
+                category: "Dinosaurs",
+                oldFact: "T-Rex had tiny, useless arms",
+                newFact: "Those arms could bench press 400 lbs and were likely used for hunting and mating",
+                yearDebunked: 2017,
+                yearTaught: 1900
+            },
+            {
+                category: "Dinosaurs",
+                oldFact: "Brontosaurus wasn't a real dinosaur",
+                newFact: "In 2015, scientists determined Brontosaurus was distinct enough to be its own genus again",
+                yearDebunked: 2015,
+                yearTaught: 1903
+            },
+            {
+                category: "Dinosaurs",
+                oldFact: "Dinosaurs were cold-blooded",
+                newFact: "Many dinosaurs were warm-blooded or had intermediate metabolisms",
+                yearDebunked: 2014,
+                yearTaught: 1900
+            },
+            {
+                category: "Dinosaurs",
+                oldFact: "Pterodactyls were dinosaurs",
+                newFact: "Pterosaurs were flying reptiles, not dinosaurs. Same with plesiosaurs and mosasaurs",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Dinosaurs",
+                oldFact: "Velociraptors were human-sized",
+                newFact: "Real velociraptors were turkey-sized. The 'raptors' in Jurassic Park were modeled on Deinonychus",
+                yearDebunked: 1993,
+                yearTaught: 1900
+            },
+            {
+                category: "Dinosaurs",
+                oldFact: "An asteroid killed all the dinosaurs instantly",
+                newFact: "The extinction took thousands of years. Many dinosaurs survived—we call them birds",
+                yearDebunked: 2010,
+                yearTaught: 1980
+            },
+            // MATH
+            {
+                category: "Math",
+                oldFact: "You'll never carry a calculator everywhere",
+                newFact: "Smartphones put calculators, plus encyclopedias, in every pocket",
+                yearDebunked: 2007,
+                yearTaught: 1980
+            },
+            {
+                category: "Math",
+                oldFact: "There's only one correct way to solve math problems",
+                newFact: "Multiple valid approaches exist. Different cultures developed different methods",
+                yearDebunked: 2010,
+                yearTaught: 1900
+            },
+            {
+                category: "Math",
+                oldFact: "Mathematicians do arithmetic in their heads",
+                newFact: "Professional mathematicians routinely use calculators for basic arithmetic",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Math",
+                oldFact: "Zero is not a number",
+                newFact: "Zero is a number with unique properties. Many ancient cultures lacked the concept",
+                yearDebunked: 1900,
+                yearTaught: 1800
+            },
+            // LANGUAGE
+            {
+                category: "Language",
+                oldFact: "Ending a sentence with a preposition is wrong",
+                newFact: "This rule was invented by 17th-century grammarians copying Latin. It's perfectly valid English",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Language",
+                oldFact: "You can't start a sentence with 'And' or 'But'",
+                newFact: "Great writers have done this for centuries. It's stylistically valid",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Language",
+                oldFact: "Split infinitives are grammatically wrong",
+                newFact: "Another Latin-based myth. 'To boldly go' is perfectly correct English",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Language",
+                oldFact: "'Ain't' isn't a real word",
+                newFact: "It's been in use since the 17th century and appears in every major dictionary",
+                yearDebunked: 2010,
+                yearTaught: 1900
+            },
+            {
+                category: "Language",
+                oldFact: "Inuit have 50 words for snow",
+                newFact: "They have about the same as English. The myth arose from misunderstanding polysynthetic languages",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Language",
+                oldFact: "Latin is a dead language",
+                newFact: "Latin evolved into Spanish, French, Italian, Portuguese, and Romanian—it's very much alive",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            // ECONOMICS
+            {
+                category: "Economics",
+                oldFact: "The diamond engagement ring is ancient tradition",
+                newFact: "De Beers invented this tradition through marketing in 1938",
+                yearDebunked: 2000,
+                yearTaught: 1938
+            },
+            {
+                category: "Economics",
+                oldFact: "Diamonds are rare and valuable",
+                newFact: "Diamonds are common. De Beers controlled supply to create artificial scarcity",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Economics",
+                oldFact: "The Great Depression was caused by the stock market crash",
+                newFact: "The crash was a symptom. Bank failures, policy errors, and reduced spending caused it",
+                yearDebunked: 2008,
+                yearTaught: 1930
+            },
+            {
+                category: "Economics",
+                oldFact: "Gold has intrinsic value",
+                newFact: "Gold's value is entirely based on belief. It has some industrial uses but mostly symbolic worth",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            // MEDICINE
+            {
+                category: "Medicine",
+                oldFact: "Ulcers are caused by stress and spicy food",
+                newFact: "Most ulcers are caused by H. pylori bacteria. Barry Marshall won the Nobel Prize proving this",
+                yearDebunked: 2005,
+                yearTaught: 1900
+            },
+            {
+                category: "Medicine",
+                oldFact: "The appendix is useless",
+                newFact: "It serves as a reservoir for beneficial gut bacteria and aids immune function",
+                yearDebunked: 2007,
+                yearTaught: 1900
+            },
+            {
+                category: "Medicine",
+                oldFact: "Tonsils are vestigial organs",
+                newFact: "Tonsils are part of the immune system and help fight infections early in life",
+                yearDebunked: 2012,
+                yearTaught: 1900
+            },
+            {
+                category: "Medicine",
+                oldFact: "Vaccines cause autism",
+                newFact: "Dozens of studies found no link. The original study was fraudulent and retracted",
+                yearDebunked: 2010,
+                yearTaught: 1998
+            },
+            {
+                category: "Medicine",
+                oldFact: "Peeing on a jellyfish sting helps",
+                newFact: "Urine can make stings worse. Vinegar or seawater work better",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Medicine",
+                oldFact: "You should tilt your head back during nosebleeds",
+                newFact: "Lean forward and pinch your nose. Tilting back makes you swallow blood",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Medicine",
+                oldFact: "Put butter on a burn",
+                newFact: "Butter traps heat and causes infection. Use cool running water",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Medicine",
+                oldFact: "You can 'catch up' on sleep",
+                newFact: "Sleep debt accumulates and can't be fully repaid. Chronic sleep loss has lasting effects",
+                yearDebunked: 2016,
+                yearTaught: 1970
+            },
+            {
+                category: "Medicine",
+                oldFact: "MSG is bad for you",
+                newFact: "Extensive research found no link between MSG and health problems at normal doses",
+                yearDebunked: 2006,
+                yearTaught: 1968
+            },
+            // ENVIRONMENT
+            {
+                category: "Environment",
+                oldFact: "Recycling paper saves trees",
+                newFact: "Most paper comes from tree farms planted for paper production, not old-growth forests",
+                yearDebunked: 2015,
+                yearTaught: 1990
+            },
+            {
+                category: "Environment",
+                oldFact: "Humans evolved from chimpanzees",
+                newFact: "Humans and chimps share a common ancestor. Chimps evolved just as much as we did",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Environment",
+                oldFact: "The Amazon produces 20% of Earth's oxygen",
+                newFact: "The Amazon consumes as much oxygen as it produces. Oceans produce most oxygen",
+                yearDebunked: 2019,
+                yearTaught: 1990
+            },
+            {
+                category: "Environment",
+                oldFact: "Rainforests are the lungs of the Earth",
+                newFact: "Mature forests are carbon neutral. Phytoplankton and growing forests produce net oxygen",
+                yearDebunked: 2019,
+                yearTaught: 1980
+            },
+            // FOOD
+            {
+                category: "Food",
+                oldFact: "Searing meat seals in juices",
+                newFact: "Searing actually drives out moisture. It creates flavor through the Maillard reaction",
+                yearDebunked: 2007,
+                yearTaught: 1900
+            },
+            {
+                category: "Food",
+                oldFact: "Alcohol burns off completely during cooking",
+                newFact: "Significant alcohol (5-85%) remains depending on cooking method and time",
+                yearDebunked: 2007,
+                yearTaught: 1900
+            },
+            {
+                category: "Food",
+                oldFact: "Microwaves cook food from the inside out",
+                newFact: "Microwaves penetrate about an inch. The interior heats through conduction",
+                yearDebunked: 2010,
+                yearTaught: 1970
+            },
+            {
+                category: "Food",
+                oldFact: "The five-second rule makes dropped food safe",
+                newFact: "Bacteria transfer instantly. Surface type and moisture matter more than time",
+                yearDebunked: 2016,
+                yearTaught: 1970
+            },
+            {
+                category: "Food",
+                oldFact: "Fortune cookies are Chinese",
+                newFact: "They were invented in California, likely by Japanese-American bakers",
+                yearDebunked: 2008,
+                yearTaught: 1920
+            },
+            {
+                category: "Food",
+                oldFact: "Sushi means raw fish",
+                newFact: "Sushi refers to the seasoned rice. Sashimi is the raw fish",
+                yearDebunked: 2000,
+                yearTaught: 1970
+            },
+            // SPORTS
+            {
+                category: "Sports",
+                oldFact: "Stretching before exercise prevents injuries",
+                newFact: "Static stretching before exercise may actually increase injury risk. Dynamic warmups work better",
+                yearDebunked: 2013,
+                yearTaught: 1970
+            },
+            {
+                category: "Sports",
+                oldFact: "No pain, no gain",
+                newFact: "Pain signals injury. Effective training involves discomfort, not pain",
+                yearDebunked: 2015,
+                yearTaught: 1980
+            },
+            {
+                category: "Sports",
+                oldFact: "Swimming right after eating causes cramps and drowning",
+                newFact: "No documented cases exist. A light meal before swimming is fine",
+                yearDebunked: 2011,
+                yearTaught: 1900
+            },
+            {
+                category: "Sports",
+                oldFact: "Running is bad for your knees",
+                newFact: "Runners have lower rates of knee osteoarthritis than non-runners",
+                yearDebunked: 2017,
+                yearTaught: 1970
+            },
+            // CHEMISTRY
+            {
+                category: "Chemistry",
+                oldFact: "Water is a good conductor of electricity",
+                newFact: "Pure water is an insulator. Dissolved minerals make tap water conductive",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Chemistry",
+                oldFact: "Diamonds are made from coal",
+                newFact: "Most diamonds formed before land plants (and thus coal) existed. They're from different carbon",
+                yearDebunked: 2013,
+                yearTaught: 1900
+            },
+            {
+                category: "Chemistry",
+                oldFact: "Oil and water can never mix",
+                newFact: "Emulsifiers make them mix perfectly. Mayonnaise and milk are oil-water mixtures",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            // CULTURE
+            {
+                category: "Culture",
+                oldFact: "Santa's red suit was created by Coca-Cola",
+                newFact: "Red-suited Santas appeared decades before Coke ads. They just popularized the image",
+                yearDebunked: 2010,
+                yearTaught: 1970
+            },
+            {
+                category: "Culture",
+                oldFact: "Carrots were originally orange",
+                newFact: "Carrots were purple, white, or yellow. Orange was bred in the Netherlands in the 17th century",
+                yearDebunked: 2011,
+                yearTaught: 1900
+            },
+            {
+                category: "Culture",
+                oldFact: "Cinco de Mayo is Mexican Independence Day",
+                newFact: "It commemorates the Battle of Puebla. Independence Day is September 16",
+                yearDebunked: 2000,
+                yearTaught: 1970
+            },
+            {
+                category: "Culture",
+                oldFact: "Ninjas wore black",
+                newFact: "Ninjas dressed as farmers, merchants, or monks to blend in. Black is theatrical convention",
+                yearDebunked: 2000,
+                yearTaught: 1900
+            },
+            {
+                category: "Culture",
+                oldFact: "Medieval people died at 30",
+                newFact: "High infant mortality skewed averages. Adults often lived into their 60s and beyond",
+                yearDebunked: 2010,
+                yearTaught: 1900
+            }
+        ];
+
+        function generateFacts() {
+            const yearInput = document.getElementById('yearInput');
+            const results = document.getElementById('results');
+            const year = parseInt(yearInput.value);
+
+            if (!year || year < 1950 || year > 2024) {
+                yearInput.style.borderBottomColor = 'var(--red-pen)';
+                yearInput.focus();
+                setTimeout(() => {
+                    yearInput.style.borderBottomColor = 'var(--chalk-yellow)';
+                }, 1000);
+                return;
+            }
+
+            // Filter facts that would have been taught (started before graduation and debunked after)
+            const relevantFacts = outdatedFacts.filter(fact => 
+                fact.yearTaught <= year && fact.yearDebunked > year
+            );
+
+            // Shuffle and take up to 8
+            const shuffled = relevantFacts.sort(() => Math.random() - 0.5);
+            const selectedFacts = shuffled.slice(0, 8);
+
+            if (selectedFacts.length === 0) {
+                results.innerHTML = `
+                    <div class="no-results">
+                        <div class="no-results-emoji">🎓</div>
+                        <p class="no-results-text">Either you graduated too recently, or your teachers were ahead of their time!</p>
+                    </div>
+                `;
+            } else {
+                results.innerHTML = `
+                    <h2 class="results-header">Class of <span>${year}</span>, you were taught...</h2>
+                    ${selectedFacts.map(fact => `
+                        <div class="fact-card">
+                            <div class="category-tag">${fact.category}</div>
+                            <div class="old-fact">"${fact.oldFact}"</div>
+                            <div class="correction">
+                                <span class="correction-arrow">→</span>
+                                <span class="new-fact">${fact.newFact}</span>
+                            </div>
+                            <div class="year-updated">Corrected circa ${fact.yearDebunked}</div>
+                        </div>
+                    `).join('')}
+                `;
+            }
+
+            results.classList.add('visible');
+            results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            // Create eraser effect
+            createEraserEffect();
+        }
+
+        function createEraserEffect() {
+            const container = document.getElementById('eraserMarks');
+            const numMarks = 5;
+            
+            for (let i = 0; i < numMarks; i++) {
+                setTimeout(() => {
+                    const mark = document.createElement('div');
+                    mark.className = 'eraser-mark';
+                    mark.style.left = Math.random() * window.innerWidth + 'px';
+                    mark.style.top = Math.random() * window.innerHeight + 'px';
+                    mark.style.width = (Math.random() * 100 + 50) + 'px';
+                    mark.style.height = (Math.random() * 30 + 20) + 'px';
+                    container.appendChild(mark);
+                    
+                    setTimeout(() => mark.remove(), 2000);
+                }, i * 100);
+            }
+        }
+
+        // Allow Enter key to trigger generation
+        document.getElementById('yearInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                generateFacts();
+            }
+        });
+
+        // Set a reasonable default based on typical user age
+        const currentYear = new Date().getFullYear();
+        document.getElementById('yearInput').placeholder = currentYear - 10;
+    </script>
+</body>
+</html>
